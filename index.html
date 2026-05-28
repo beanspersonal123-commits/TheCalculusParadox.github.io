@@ -1,9 +1,336 @@
-<!doctype html>
-<html>
-  <head>
-    <title>This is the title of the webpage!</title>
-  </head>
-  <body>
-    <p>This is an example paragraph. Anything in the <strong>body</strong> tag will appear on the page, just like this <strong>p</strong> tag and its contents.</p>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AP Calculus Time Capsule | Single Page</title>
+  <style>
+    /* HTML/CSS: single-file responsive layout */
+    :root {
+      --bg0: #081022;
+      --bg1: #132244;
+      --card: rgba(16, 27, 56, 0.9);
+      --text: #eaf2ff;
+      --muted: #b7c6e7;
+      --cyan: #5ff3ff;
+      --purple: #b986ff;
+      --border: rgba(95, 243, 255, 0.35);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 26px rgba(95, 243, 255, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 18% 0%, #1e2f62 0%, var(--bg1) 40%, var(--bg0) 100%);
+    }
+
+    body { padding: 1rem; }
+
+    .app {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      background: rgba(6, 12, 28, 0.75);
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+    }
+
+    .brand {
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-shadow: 0 0 14px rgba(95, 243, 255, 0.6);
+    }
+
+    .tab-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .tab {
+      border: 1px solid rgba(185, 134, 255, 0.45);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+
+    .tab.active,
+    .tab:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(95, 243, 255, 0.3);
+      background: rgba(95, 243, 255, 0.12);
+    }
+
+    .page-stack { min-height: 70vh; position: relative; }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .page.active {
+      position: relative;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(185, 134, 255, 0.3);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: clamp(1rem, 2.4vw, 1.7rem);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.58rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 0.8rem;
+      background: rgba(8, 14, 34, 0.5);
+    }
+
+    h1, h2 { margin: 0 0 0.65rem; line-height: 1.2; }
+    h1 { font-size: clamp(1.7rem, 4vw, 2.7rem); }
+    h2 { font-size: clamp(1.35rem, 3vw, 2rem); color: var(--cyan); }
+    p { margin: 0 0 1rem; line-height: 1.65; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .image-placeholder {
+      min-height: 220px;
+      border-radius: 14px;
+      border: 1px dashed rgba(95, 243, 255, 0.5);
+      background: rgba(8, 16, 36, 0.7);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      font-family: Consolas, "Courier New", monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 1rem;
+    }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+
+    .btn {
+      border-radius: 12px;
+      padding: 0.75rem 1.1rem;
+      min-height: 44px;
+      border: 1px solid transparent;
+      color: #f3f8ff;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(185, 134, 255, 0.3), rgba(95, 243, 255, 0.22));
+      border-color: rgba(95, 243, 255, 0.5);
+      box-shadow: 0 0 22px rgba(95, 243, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(185, 134, 255, 0.5);
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    @media (max-width: 840px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 0.7rem; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- HTML structure: top bar + tab nav + 5 sections (home + 4 pages) -->
+    <header class="topbar">
+      <div class="brand">AP Calculus Time Capsule</div>
+      <nav class="tab-row" aria-label="Page tabs">
+        <button class="tab active" data-target="home">Home</button>
+        <button class="tab" data-target="page1">Room 1</button>
+        <button class="tab" data-target="page2">Room 2</button>
+        <button class="tab" data-target="page3">Room 3</button>
+        <button class="tab" data-target="page4">Final Room</button>
+      </nav>
+    </header>
+
+    <main class="page-stack" id="pageStack">
+      <section class="page active" id="home">
+        <article class="card">
+          <span class="tag">Homepage</span>
+          <h1>The AP Calculus Time Capsule</h1>
+          <img src="images/Homepage.png" alt="AP Calculus Time Capsule" style="width: 100%; border-radius: 12px; margin-bottom: 1rem;">
+          <p>We are finally done with Calculus, Summer is just around the corner. You're sitting in calculus class doing absolutely nothing productive when suddenly Ms. Drum walks in carrying the giant bin of missing calculators. She should be relaxed. She should be letting everyone chill. But instead, she drops the bin on the desk and says, 'WHERE ARE MY CALCULATORS??'</p>
+          <p>The class barely reacts. Adit is in the back of the room with his phone watching TikToks at full volume and rage baiting everyone around him while Allen argues with him across the classroom. Shaurya is just being nonchalant in the corner, Abhinav is half asleep, and Arnav is struggling to figure out the wordle.</p>
+          <p>You lean back in your chair when the whiteboard suddenly glitches. A glowing sine graph tears across the board and starts pulling papers, desks, and backpacks toward it while old quizzes, which we all failed, from September fly through the air.</p>
+          <p>That's when you realize this isn't normal.<br>The room begins shaking.<br>And now...</p>
+          <p>Adit looks around and goes, 'Wait... where's my invite?'</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" data-target="page1">Begin Escape</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="page" id="page1">
+        <article class="card content-grid">
+          <div>
+            <span class="tag">Page 1</span>
+            <h2>Room 1: The Limit &amp; Derivatives of Time</h2>
+            <p>We are now in Ms. Drum's memories of AP Calculus.</p>
+            <p>You wake up back in September. The classroom looks older, unfinished notes cover the walls, and everyone is suddenly holding the very first limits quiz. Every paper has the same giant red number written across the top.</p>
+            <p>67.</p>
+            <p>Ms. Drum slowly walks to the front of the room holding the grade spreadsheet while the class completely loses it. Someone yells '67!' and suddenly everybody joins in.</p>
+            <p>'67! 67! 67!'</p>
+            <p>The chanting echoes through the room while Adit screams 'Big Boy Yalla,' Shaurya argues the quiz was unfair, and Arnav is already calculating how much the grade destroyed his average.</p>
+            <p>Then the lights flicker.</p>
+            <p>The board suddenly fills itself with impossible limit problems while giant glowing 67s flash across the walls. A lock appears on the classroom door with five empty spaces beneath it.</p>
+            <p>That's when you realize the only way to escape the Limits &amp; Derivatives Era is to solve the problems that started it all.</p>
+            <div class="btn-row">
+              <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLScMw4_x12Tmo2ZFsVnqooIESN0onql60DIwYXhmWlsSbwJZNg/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
+              <button class="btn btn-secondary" data-target="page2">Next Page</button>
+            </div>
+          </div>
+          <div class="image-placeholder"><img src="images/Room1.jpg" alt="Room 1" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
+        </article>
+      </section>
+
+      <section class="page" id="page2">
+        <article class="card content-grid">
+          <div>
+            <span class="tag">Page 2</span>
+            <h2>Room 2: The Integral Archives</h2>
+            <p>The room suddenly glitches and you fast forward to March. Old integral packets are stacked across every desk, antiderivatives on the floors, and the clock is frozen the night before the integrals quiz.</p>
+            <p>At the front of the room, Shaurya and Disha are desperately trying to convince Ms. Drum to move the quiz back one more day. Shaurya is fully on his knees begging while somehow bringing up stories about Ms. Drum's college friends like it is helping his case.</p>
+            <p>Meanwhile, Adit is in the corner complaining that he still does not have his driver's license and now has to stay after school for extra help.</p>
+            <p>The room suddenly shakes.</p>
+            <p>Integral symbols begin glowing across the ceiling as the classroom door locks itself and four empty spaces appear beside it.</p>
+            <p>That's when you realize the only way to escape the Integral Archives is to solve the integrals everyone tried avoiding in the first place.</p>
+            <div class="btn-row">
+              <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd_cz3rWEc8evZBmuGZVjc7QgbQidJHr7R25lRl3ulQqp_cjA/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
+              <button class="btn btn-secondary" data-target="page1">Previous Page</button>
+              <button class="btn btn-secondary" data-target="page3">Next Page</button>
+            </div>
+          </div>
+          <div class="image-placeholder"><img src="images/room2.png" alt="Room 2" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
+        </article>
+      </section>
+
+      <section class="page" id="page3">
+        <article class="card content-grid">
+          <div>
+            <span class="tag">Page 3</span>
+            <h2>Room 3: The Applications Chamber</h2>
+            <p>The timeline skips forward again and suddenly you are back in the Applications unit. Optimization notes cover the walls, related rates diagrams are floating through the air, and particle motion formulas are flashing across the whiteboard.</p>
+            <p>Adit is loudly complaining that the optimization test was the hardest thing ever created while Shaurya is getting glazed for dropping one of the highest scores. Arnav is randomly flexing his white teeth in the reflection of the classroom window while Abhinav sits quietly in the corner pretending none of this concerns him.</p>
+            <p>Then a phone notification goes off.</p>
+            <p>The entire room freezes as Ms. Drum slowly turns toward Adit, who is still holding his phone under the desk. The lights begin flickering while application problems appear across the walls and the classroom door seals shut with three empty locks beneath it.</p>
+            <p>That's when you realize the only way to escape the Applications Chamber is to solve the problems before the timeline resets again.</p>
+            <div class="btn-row">
+              <a class="btn btn-primary" href="https://docs.google.com/forms/d/1HTXpFUtJOoqZVgXZm9JozFWV9m_ndRPIpDyKBK31VCc/viewform?edit_requested=true" target="_blank" rel="noopener noreferrer">Open Google Form</a>
+              <button class="btn btn-secondary" data-target="page2">Previous Page</button>
+              <button class="btn btn-secondary" data-target="page4">Next Page</button>
+            </div>
+          </div>
+          <div class="image-placeholder"><img src="images/room3.png" alt="Room 3" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
+        </article>
+      </section>
+
+      <section class="page" id="page4">
+        <article class="card content-grid">
+          <div>
+            <span class="tag">Page 4</span>
+            <h2>The Final Code of Calculus</h2>
+            <p>The door to the Applications Chamber blows wide open, and you stumble back into the main classroom. The timeline is moving at max speed; all the floating cones smash to the ground, derivative equations blur, and the whiteboard lets seems to be getting pieced slowly together...</p>
+            <p>Through the smoke, you see the hallway. Summer vacation is literally a foot away.</p>
+            <p>But the portal is blocking you. Remember those 3 metal locks mentioned in every room? They're demanding the ultimate master key to shut down the rift permanently. This is it. Look back into the past and put the code together. Bring together your secret code words from Room 1, Room 2, and Room 3 into a single continuous chain of words to shatter the loop!</p>
+            <p>Type the codes in exact sequential order: Room 1 + Room 2 + Room 3<br>Use all lowercase letters with no spaces or symbols. Mess up a single letter, and you are trapped in the capsule forever!</p>
+            <div class="btn-row">
+              <a class="btn btn-primary" href="GOOGLE_FORM_LINK" target="_blank" rel="noopener noreferrer">Open Google Form</a>
+              <button class="btn btn-secondary" data-target="page3">Previous Page</button>
+              <button class="btn btn-secondary" data-target="home">Back to Home</button>
+            </div>
+          </div>
+          <div class="image-placeholder"><img src="images/Finalroom.jpg" alt="Final Room" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // JavaScript navigation logic: one visible section + active tab highlighting.
+    (function () {
+      const pages = Array.from(document.querySelectorAll(".page"));
+      const navButtons = Array.from(document.querySelectorAll(".tab"));
+      const actionButtons = Array.from(document.querySelectorAll("[data-target]"));
+
+      function showPage(id) {
+        pages.forEach((page) => {
+          page.classList.toggle("active", page.id === id);
+        });
+
+        navButtons.forEach((tab) => {
+          tab.classList.toggle("active", tab.getAttribute("data-target") === id);
+        });
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      actionButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          const target = this.getAttribute("data-target");
+          if (target) showPage(target);
+        });
+      });
+    })();
+  </script>
+</body>
 </html>
