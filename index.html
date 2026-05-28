@@ -3,197 +3,1111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AP Calculus Time Capsule | Single Page</title>
+  <title>The Calculus Paradox</title>
   <style>
-    /* HTML/CSS: single-file responsive layout */
+    /* ===== Font + Theme System ===== */
+    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800&family=Rajdhani:wght@400;500;700&display=swap");
+
     :root {
-      --bg0: #081022;
-      --bg1: #132244;
-      --card: rgba(16, 27, 56, 0.9);
-      --text: #eaf2ff;
-      --muted: #b7c6e7;
-      --cyan: #5ff3ff;
-      --purple: #b986ff;
-      --border: rgba(95, 243, 255, 0.35);
-      --shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 26px rgba(95, 243, 255, 0.14);
+      --bg-0: #050816;
+      --bg-1: #0b1540;
+      --bg-2: #1a1d63;
+      --panel: rgba(10, 18, 48, 0.76);
+      --panel-soft: rgba(26, 30, 88, 0.5);
+      --txt: #edf4ff;
+      --txt-dim: #b8c9ef;
+      --cyan: #68f3ff;
+      --blue: #84a5ff;
+      --purple: #bc8bff;
+      --magenta: #ff7fc5;
+      --ok: #9bffc7;
+      --danger: #ffa9b8;
+      --edge: rgba(104, 243, 255, 0.35);
+      --glow: 0 0 24px rgba(104, 243, 255, 0.25);
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       min-height: 100%;
-      font-family: "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(circle at 18% 0%, #1e2f62 0%, var(--bg1) 40%, var(--bg0) 100%);
+      color: var(--txt);
+      background:
+        radial-gradient(circle at 20% 0%, #2f3e8f 0%, #121b4e 24%, #070d2c 52%, #050816 100%),
+        linear-gradient(120deg, rgba(104, 243, 255, 0.04), rgba(188, 139, 255, 0.06));
+      font-family: "Rajdhani", "Segoe UI", sans-serif;
+      overflow-x: hidden;
     }
 
-    body { padding: 1rem; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(132, 165, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(132, 165, 255, 0.1) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 90%);
+      opacity: 0.35;
+      animation: gridSlide 28s linear infinite;
+      z-index: 0;
+    }
+
+    .bg-noise,
+    .equation-layer,
+    #particleCanvas,
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    #particleCanvas {
+      z-index: 1;
+    }
+
+    .bg-noise {
+      z-index: 2;
+      opacity: 0.06;
+      mix-blend-mode: screen;
+      background-image: radial-gradient(#ffffff 0.45px, transparent 0.45px);
+      background-size: 3px 3px;
+    }
+
+    .equation-layer {
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .equation {
+      position: absolute;
+      white-space: nowrap;
+      font-family: Consolas, "Courier New", monospace;
+      color: rgba(188, 139, 255, 0.52);
+      text-shadow: 0 0 12px rgba(188, 139, 255, 0.35);
+      animation: equationDrift linear infinite;
+    }
+
+    .loading-screen {
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      background: rgba(3, 6, 18, 0.88);
+      backdrop-filter: blur(4px);
+    }
+
+    .loading-screen.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .loading-box {
+      border-radius: 14px;
+      border: 1px solid var(--edge);
+      background: rgba(8, 14, 34, 0.9);
+      padding: 1rem 1.3rem;
+      box-shadow: var(--shadow), var(--glow);
+      min-width: 220px;
+      text-align: center;
+    }
+
+    .loading-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin: 0 auto 0.5rem;
+      border: 3px solid rgba(104, 243, 255, 0.2);
+      border-top-color: var(--cyan);
+      animation: spin 0.8s linear infinite;
+    }
 
     .app {
-      width: 100%;
-      max-width: 980px;
+      position: relative;
+      z-index: 5;
+      width: min(1150px, 96vw);
       margin: 0 auto;
+      padding: 1rem 0 2rem;
     }
 
+    /* ===== Top Navigation + HUD ===== */
     .topbar {
       position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      border: 1px solid var(--border);
+      top: 10px;
+      z-index: 20;
+      padding: 0.75rem 1rem;
       border-radius: 14px;
-      backdrop-filter: blur(8px);
-      background: rgba(6, 12, 28, 0.75);
-      box-shadow: var(--shadow);
-      margin-bottom: 1rem;
+      border: 1px solid var(--edge);
+      background: rgba(8, 14, 34, 0.72);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow), var(--glow);
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .brand-glyph {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #061026;
+      font-weight: 800;
+      background: radial-gradient(circle, var(--cyan), var(--blue));
+      box-shadow: 0 0 18px rgba(104, 243, 255, 0.6);
+      animation: logoSpin 7s linear infinite;
+      transform-origin: center;
     }
 
     .brand {
-      font-weight: 700;
-      color: var(--cyan);
-      letter-spacing: 0.05em;
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(1.02rem, 2.2vw, 1.35rem);
+      letter-spacing: 0.11em;
       text-transform: uppercase;
-      text-shadow: 0 0 14px rgba(95, 243, 255, 0.6);
+      color: var(--cyan);
+      text-shadow: 0 0 12px rgba(104, 243, 255, 0.9), 0 0 22px rgba(188, 139, 255, 0.4);
+      cursor: pointer;
+    }
+
+    .brand-wrap:hover .brand-glyph {
+      animation-duration: 2.2s;
+      box-shadow: 0 0 24px rgba(104, 243, 255, 0.9);
+    }
+
+    .hud {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .hud-chip {
+      border: 1px solid rgba(188, 139, 255, 0.45);
+      background: rgba(188, 139, 255, 0.12);
+      color: var(--txt-dim);
+      border-radius: 999px;
+      padding: 0.28rem 0.7rem;
+      font-size: 0.86rem;
+      letter-spacing: 0.03em;
     }
 
     .tab-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
+      gap: 0.5rem;
     }
 
     .tab {
-      border: 1px solid rgba(185, 134, 255, 0.45);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(132, 165, 255, 0.35);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--txt);
       border-radius: 999px;
-      padding: 0.45rem 0.8rem;
-      font-size: 0.86rem;
+      padding: 0.45rem 0.9rem;
       cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
-    .tab.active,
-    .tab:hover {
+    .tab:hover,
+    .tab.active {
       border-color: var(--cyan);
-      box-shadow: 0 0 16px rgba(95, 243, 255, 0.3);
-      background: rgba(95, 243, 255, 0.12);
+      background: rgba(104, 243, 255, 0.14);
+      box-shadow: 0 0 14px rgba(104, 243, 255, 0.35);
+      transform: translateY(-1px);
     }
 
-    .page-stack { min-height: 70vh; position: relative; }
+    .timeline {
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .timeline > span {
+      display: block;
+      height: 100%;
+      width: 8%;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      box-shadow: 0 0 18px rgba(104, 243, 255, 0.6);
+      transition: width 0.4s ease;
+    }
+
+    /* timeline uses the top tab row + progress bar only */
+
+    .page-stack {
+      margin-top: 1rem;
+      min-height: 78vh;
+      position: relative;
+    }
 
     .page {
       position: absolute;
       inset: 0;
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(10px) scale(0.995);
       pointer-events: none;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: opacity 0.33s ease, transform 0.33s ease;
     }
 
     .page.active {
       position: relative;
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
       pointer-events: auto;
     }
 
+    /* ===== Panel + Typography ===== */
     .card {
-      background: var(--card);
-      border: 1px solid rgba(185, 134, 255, 0.3);
+      background: linear-gradient(160deg, rgba(16, 24, 62, 0.88), rgba(13, 17, 46, 0.92));
+      border: 1px solid rgba(188, 139, 255, 0.4);
       border-radius: 18px;
       box-shadow: var(--shadow);
-      padding: clamp(1rem, 2.4vw, 1.7rem);
+      padding: clamp(1rem, 2.2vw, 1.45rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -120% 55% auto -10%;
+      height: 230%;
+      background: linear-gradient(125deg, rgba(104, 243, 255, 0.16), transparent 58%);
+      transform: rotate(6deg);
+      pointer-events: none;
     }
 
     .tag {
       display: inline-block;
-      padding: 0.2rem 0.58rem;
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.73rem;
+      color: var(--txt-dim);
+      padding: 0.23rem 0.6rem;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.82rem;
+      border: 1px solid rgba(104, 243, 255, 0.42);
+      background: rgba(8, 14, 34, 0.66);
       margin-bottom: 0.8rem;
-      background: rgba(8, 14, 34, 0.5);
     }
 
-    h1, h2 { margin: 0 0 0.65rem; line-height: 1.2; }
-    h1 { font-size: clamp(1.7rem, 4vw, 2.7rem); }
-    h2 { font-size: clamp(1.35rem, 3vw, 2rem); color: var(--cyan); }
-    p { margin: 0 0 1rem; line-height: 1.65; }
+    .room-code {
+      margin: 0.2rem 0 0.8rem;
+      color: var(--ok);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-size: 0.88rem;
+    }
+
+    h1,
+    h2 {
+      margin: 0 0 0.5rem;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.04em;
+      line-height: 1.15;
+    }
+
+    h1 {
+      font-size: clamp(1.95rem, 4.6vw, 3.3rem);
+      text-shadow: 0 0 20px rgba(104, 243, 255, 0.7), 0 0 38px rgba(188, 139, 255, 0.55);
+      animation: subtleFlicker 4.4s infinite;
+    }
+
+    h2 {
+      font-size: clamp(1.42rem, 3.2vw, 2.2rem);
+      color: #e7f1ff;
+      text-shadow: 0 0 12px rgba(104, 243, 255, 0.45), 0 0 22px rgba(188, 139, 255, 0.35);
+    }
+
+    .subtitle {
+      color: var(--cyan);
+      margin: 0 0 0.95rem;
+      font-size: clamp(1rem, 1.8vw, 1.14rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0 0 0.85rem;
+      color: var(--txt);
+      font-size: 1.08rem;
+      line-height: 1.54;
+    }
+
+    .muted {
+      color: var(--txt-dim);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .hero-image {
+      min-height: 380px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(104, 243, 255, 0.35);
+      box-shadow: 0 0 24px rgba(104, 243, 255, 0.16);
+      position: relative;
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      transform: scale(1.03);
+    }
+
+    .hero-image::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 38%, rgba(5, 8, 22, 0.72));
+    }
+
+    .hero-note {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      padding: 0.52rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid rgba(188, 139, 255, 0.45);
+      background: rgba(11, 18, 48, 0.74);
+      color: var(--txt-dim);
+      font-size: 0.9rem;
+      z-index: 2;
+    }
 
     .content-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: 1.12fr 0.88fr;
       gap: 1rem;
       align-items: start;
     }
 
-    .image-placeholder {
-      min-height: 220px;
+    .image-panel {
       border-radius: 14px;
-      border: 1px dashed rgba(95, 243, 255, 0.5);
-      background: rgba(8, 16, 36, 0.7);
-      display: grid;
-      place-items: center;
-      text-align: center;
-      color: var(--muted);
-      font-family: Consolas, "Courier New", monospace;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(104, 243, 255, 0.35);
+      box-shadow: 0 0 20px rgba(104, 243, 255, 0.14);
+      background: rgba(6, 11, 30, 0.82);
+      min-height: 250px;
+      position: relative;
     }
 
-    .btn-row { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+    .image-panel img {
+      width: 100%;
+      height: 100%;
+      min-height: 250px;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+
+    .image-panel[data-fallback]::before {
+      content: attr(data-fallback);
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.76rem;
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(0, 0, 0, 0.44);
+      border: 1px dashed rgba(255, 255, 255, 0.5);
+      padding: 0.2rem 0.35rem;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+
+    .hud-panel {
+      margin-top: 0.8rem;
+      border: 1px solid rgba(132, 165, 255, 0.35);
+      border-radius: 12px;
+      background: rgba(8, 14, 34, 0.62);
+      padding: 0.6rem;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--txt-dim);
+    }
+
+    .hud-progress {
+      height: 7px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .hud-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--magenta), var(--cyan));
+      box-shadow: 0 0 10px rgba(255, 127, 197, 0.5);
+      animation: pulseBar 2.4s infinite;
+    }
+
+    .console-visual {
+      margin-top: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid rgba(104, 243, 255, 0.34);
+      background: radial-gradient(circle at 20% 10%, rgba(104, 243, 255, 0.12), rgba(8, 14, 34, 0.74));
+      overflow: hidden;
+      position: relative;
+      min-height: 120px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .console-visual:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(104, 243, 255, 0.28);
+    }
+
+    .console-visual::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(115deg, transparent 15%, rgba(255, 255, 255, 0.07) 50%, transparent 85%);
+      transform: translateX(-120%);
+      animation: consoleSweep 4.2s linear infinite;
+      pointer-events: none;
+    }
+
+    .console-svg {
+      width: 100%;
+      height: 120px;
+      display: block;
+    }
+
+    .console-grid {
+      stroke: rgba(132, 165, 255, 0.24);
+      stroke-width: 1;
+    }
+
+    .console-wave {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 8 8;
+      animation: waveFlow 3.8s linear infinite;
+    }
+
+    .console-ring {
+      fill: none;
+      stroke-width: 2.2;
+      animation: ringPulse 2.4s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+
+    .console-hand {
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      animation: handSpin 6s linear infinite;
+      transform-origin: 80px 60px;
+    }
+
+    .room1-console .console-wave,
+    .room1-console .console-hand,
+    .room1-console .console-ring {
+      stroke: #68f3ff;
+    }
+
+    .room2-console .console-wave,
+    .room2-console .console-hand,
+    .room2-console .console-ring {
+      stroke: #bc8bff;
+    }
+
+    .room3-console .console-wave,
+    .room3-console .console-hand,
+    .room3-console .console-ring {
+      stroke: #9bffc7;
+    }
+
+    .final-console .console-wave,
+    .final-console .console-hand,
+    .final-console .console-ring {
+      stroke: #ff7fc5;
+    }
+
+    .btn-row {
+      margin-top: 0.95rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
 
     .btn {
-      border-radius: 12px;
-      padding: 0.75rem 1.1rem;
       min-height: 44px;
+      border-radius: 12px;
       border: 1px solid transparent;
-      color: #f3f8ff;
+      padding: 0.72rem 1rem;
       text-decoration: none;
+      color: #f4fbff;
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.03em;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px) scale(1.01);
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, rgba(185, 134, 255, 0.3), rgba(95, 243, 255, 0.22));
-      border-color: rgba(95, 243, 255, 0.5);
-      box-shadow: 0 0 22px rgba(95, 243, 255, 0.3);
+      background: linear-gradient(135deg, rgba(188, 139, 255, 0.35), rgba(104, 243, 255, 0.28));
+      border-color: rgba(104, 243, 255, 0.55);
+      box-shadow: 0 0 20px rgba(104, 243, 255, 0.32);
     }
 
     .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(185, 134, 255, 0.5);
+      border-color: rgba(188, 139, 255, 0.5);
     }
 
-    .btn:hover { transform: translateY(-2px); }
-
-    @media (max-width: 840px) {
-      .content-grid { grid-template-columns: 1fr; }
+    .btn.is-disabled,
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      pointer-events: none;
     }
 
-    @media (max-width: 560px) {
-      body { padding: 0.7rem; }
-      .btn { width: 100%; }
+    .howto-list {
+      margin: 0.5rem 0 0;
+      padding-left: 1.1rem;
+      color: var(--txt);
+      line-height: 1.6;
+    }
+
+    .howto-list li {
+      margin: 0 0 0.45rem;
+    }
+
+    .lock-box {
+      margin-top: 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(104, 243, 255, 0.42);
+      background: rgba(8, 14, 34, 0.64);
+      padding: 0.7rem;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .lock-title {
+      font-family: "Orbitron", sans-serif;
+      font-size: 0.9rem;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lock-hint {
+      color: var(--txt-dim);
+      font-size: 0.94rem;
+    }
+
+    .lock-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .lock-options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.4rem;
+      width: 100%;
+    }
+
+    .lock-choice {
+      border-radius: 10px;
+      border: 1px solid rgba(132, 165, 255, 0.45);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--txt);
+      min-height: 32px;
+      cursor: pointer;
+      font-family: "Rajdhani", sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: clamp(0.6rem, 0.95vw, 0.74rem);
+      line-height: 1.08;
+      padding: 0.28rem 0.34rem;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      transition: all 0.2s ease;
+    }
+
+    .lock-choice:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(104, 243, 255, 0.35);
+    }
+
+    .lock-choice.selected {
+      border-color: var(--magenta);
+      background: rgba(255, 127, 197, 0.2);
+      box-shadow: 0 0 14px rgba(255, 127, 197, 0.38);
+    }
+
+    .lock-box[data-lock-room="final"] .lock-options {
+      grid-template-columns: 1fr;
+    }
+
+    .lock-box[data-lock-room="final"] .lock-choice {
+      min-height: 28px;
+      font-size: 0.62rem;
+      padding: 0.24rem 0.3rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+      white-space: nowrap;
+    }
+
+    .lock-input {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 10px;
+      border: 1px solid rgba(132, 165, 255, 0.45);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--txt);
+      padding: 0.58rem 0.65rem;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .lock-status {
+      font-size: 0.9rem;
+      color: var(--txt-dim);
+      min-height: 1.2rem;
+    }
+
+    .lock-status.ok {
+      color: var(--ok);
+    }
+
+    .lock-status.bad {
+      color: var(--danger);
+    }
+
+    .secret-equation {
+      margin-top: 0.6rem;
+      display: inline-block;
+      color: rgba(255, 255, 255, 0.35);
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.28);
+      cursor: pointer;
+      transition: color 0.2s ease;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9rem;
+    }
+
+    .secret-equation:hover {
+      color: var(--ok);
+    }
+
+    .lore {
+      margin-top: 0.6rem;
+      border: 1px dashed rgba(155, 255, 199, 0.45);
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      color: var(--ok);
+      display: none;
+      background: rgba(12, 34, 28, 0.38);
+    }
+
+    .lore.show {
+      display: block;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .celebrate {
+      animation: celebratePop 0.65s ease;
+    }
+
+    .spark {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 60;
+      animation: sparkFly 0.9s ease forwards;
+    }
+
+    .bg-egg {
+      position: fixed;
+      right: 14px;
+      bottom: 12px;
+      z-index: 25;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(104, 243, 255, 0.58);
+      background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.32), rgba(104, 243, 255, 0.18));
+      color: #dff8ff;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 1.05rem;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(104, 243, 255, 0.48);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .bg-egg:hover {
+      transform: scale(1.08);
+      border-color: rgba(155, 255, 199, 0.85);
+      box-shadow: 0 0 22px rgba(155, 255, 199, 0.62);
+    }
+
+    .bg-egg.explode {
+      animation: eggExplode 0.42s ease forwards;
+    }
+
+    .egg-toast {
+      position: fixed;
+      right: 54px;
+      bottom: 14px;
+      z-index: 25;
+      border-radius: 8px;
+      border: 1px solid rgba(155, 255, 199, 0.52);
+      background: rgba(12, 34, 28, 0.88);
+      color: var(--ok);
+      font-size: 0.88rem;
+      padding: 0.24rem 0.52rem;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      pointer-events: none;
+    }
+
+    .egg-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .egg-67 {
+      position: fixed;
+      z-index: 65;
+      pointer-events: none;
+      font-family: "Orbitron", sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #ff7fc5;
+      text-shadow: 0 0 10px rgba(255, 127, 197, 0.8), 0 0 18px rgba(104, 243, 255, 0.55);
+      animation: burst67 1s ease forwards;
+    }
+
+    .footer-note {
+      margin-top: 1rem;
+      text-align: center;
+      color: var(--txt-dim);
+      font-size: 0.93rem;
+      opacity: 0.82;
+    }
+
+    /* ===== Room Accent Themes (UI only, not global background) ===== */
+    #page1,
+    #page2,
+    #page3,
+    #page4 {
+      --room-accent: var(--cyan);
+      --room-soft: rgba(104, 243, 255, 0.16);
+      --room-strong: rgba(104, 243, 255, 0.45);
+    }
+
+    #page1 {
+      --room-accent: #68b8ff;
+      --room-soft: rgba(104, 184, 255, 0.17);
+      --room-strong: rgba(104, 184, 255, 0.48);
+    }
+
+    #page2 {
+      --room-accent: #ff7a7a;
+      --room-soft: rgba(255, 122, 122, 0.18);
+      --room-strong: rgba(255, 122, 122, 0.5);
+    }
+
+    #page3 {
+      --room-accent: #7dffb3;
+      --room-soft: rgba(125, 255, 179, 0.18);
+      --room-strong: rgba(125, 255, 179, 0.48);
+    }
+
+    #page4 {
+      --room-accent: #ffd96a;
+      --room-soft: rgba(255, 217, 106, 0.2);
+      --room-strong: rgba(255, 217, 106, 0.55);
+    }
+
+    #page1 .subtitle,
+    #page2 .subtitle,
+    #page3 .subtitle,
+    #page4 .subtitle {
+      color: var(--room-accent);
+    }
+
+    #page1 .card,
+    #page2 .card,
+    #page3 .card,
+    #page4 .card {
+      border-color: var(--room-strong);
+    }
+
+    #page1 .lock-title,
+    #page2 .lock-title,
+    #page3 .lock-title,
+    #page4 .lock-title {
+      color: var(--room-accent);
+    }
+
+    #page1 .lock-box,
+    #page2 .lock-box,
+    #page3 .lock-box,
+    #page4 .lock-box {
+      border-color: var(--room-strong);
+      background: linear-gradient(160deg, rgba(8, 14, 34, 0.7), var(--room-soft));
+    }
+
+    #page1 .hud-panel,
+    #page2 .hud-panel,
+    #page3 .hud-panel,
+    #page4 .hud-panel {
+      border-color: var(--room-strong);
+    }
+
+    #page1 .hud-progress > span,
+    #page2 .hud-progress > span,
+    #page3 .hud-progress > span,
+    #page4 .hud-progress > span {
+      background: linear-gradient(90deg, var(--room-accent), #ffffff);
+      box-shadow: 0 0 12px var(--room-soft);
+    }
+
+    #page1 .btn-primary,
+    #page2 .btn-primary,
+    #page3 .btn-primary,
+    #page4 .btn-primary {
+      background: linear-gradient(135deg, var(--room-soft), rgba(255, 255, 255, 0.12));
+      border-color: var(--room-strong);
+      box-shadow: 0 0 18px var(--room-soft);
+    }
+
+    #page1 .lock-choice:hover,
+    #page2 .lock-choice:hover,
+    #page3 .lock-choice:hover,
+    #page4 .lock-choice:hover {
+      border-color: var(--room-accent);
+      box-shadow: 0 0 11px var(--room-soft);
+    }
+
+    #page1 .lock-choice.selected,
+    #page2 .lock-choice.selected,
+    #page3 .lock-choice.selected,
+    #page4 .lock-choice.selected {
+      border-color: var(--room-accent);
+      background: var(--room-soft);
+      box-shadow: 0 0 12px var(--room-soft);
+    }
+
+    #page1 .console-visual,
+    #page2 .console-visual,
+    #page3 .console-visual,
+    #page4 .console-visual {
+      border-color: var(--room-strong);
+      box-shadow: 0 0 16px var(--room-soft);
+    }
+
+    @media (max-width: 940px) {
+      .hero,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-image {
+        min-height: 260px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        width: 95vw;
+      }
+      .btn {
+        width: 100%;
+      }
+      p {
+        font-size: 1rem;
+      }
+    }
+
+    /* ===== Motion ===== */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes logoSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes gridSlide {
+      from { transform: translateY(0); }
+      to { transform: translateY(46px); }
+    }
+
+    @keyframes equationDrift {
+      from { transform: translateX(-120vw); opacity: 0; }
+      10% { opacity: 1; }
+      85% { opacity: 1; }
+      to { transform: translateX(120vw); opacity: 0; }
+    }
+
+    @keyframes subtleFlicker {
+      0%, 19%, 21%, 56%, 100% { opacity: 1; }
+      20%, 55% { opacity: 0.76; }
+    }
+
+    @keyframes pulseBar {
+      0%, 100% { filter: brightness(0.95); }
+      50% { filter: brightness(1.25); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes celebratePop {
+      0% { transform: scale(0.98); filter: brightness(1); }
+      50% { transform: scale(1.02); filter: brightness(1.35); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    @keyframes sparkFly {
+      to {
+        transform: translate(var(--sx), var(--sy)) scale(0.2);
+        opacity: 0;
+      }
+    }
+
+    @keyframes consoleSweep {
+      to { transform: translateX(120%); }
+    }
+
+    @keyframes waveFlow {
+      to { stroke-dashoffset: -120; }
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes handSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes burst67 {
+      from {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.9);
+      }
+      to {
+        opacity: 0;
+        transform: translate(var(--dx), var(--dy)) scale(1.35);
+      }
+    }
+
+    @keyframes eggExplode {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      45% {
+        transform: scale(1.22);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0.2);
+        opacity: 0;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Ambient render layers -->
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+  <div class="equation-layer" id="equationLayer" aria-hidden="true"></div>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <button class="bg-egg" id="bgEgg" title="Hidden glyph">∂</button>
+
+  <!-- Simple loading transition between tabs -->
+  <div class="loading-screen" id="loadingScreen" aria-hidden="true">
+    <div class="loading-box">
+      <div class="loading-ring"></div>
+      <div>Loading next room...</div>
+      <div class="muted">Please wait.</div>
+    </div>
+  </div>
+
   <div class="app">
-    <!-- HTML structure: top bar + tab nav + 5 sections (home + 4 pages) -->
+    <!-- HTML structure: sticky topbar, timeline HUD, and 5 in-page sections -->
     <header class="topbar">
-      <div class="brand">AP Calculus Time Capsule</div>
+      <div class="topbar-row">
+        <div class="brand-wrap">
+          <div class="brand-glyph" aria-hidden="true">∫</div>
+          <h1 class="brand" id="brandTap" title="Try clicking me">The Calculus Paradox</h1>
+        </div>
+        <div class="hud">
+          <span class="hud-chip" id="clockChip">Timeline 24% Stable</span>
+        </div>
+      </div>
       <nav class="tab-row" aria-label="Page tabs">
         <button class="tab active" data-target="home">Home</button>
         <button class="tab" data-target="page1">Room 1</button>
@@ -201,21 +1115,40 @@
         <button class="tab" data-target="page3">Room 3</button>
         <button class="tab" data-target="page4">Final Room</button>
       </nav>
+      <div class="timeline" aria-hidden="true"><span id="timelineBar"></span></div>
     </header>
 
-    <main class="page-stack" id="pageStack">
+    <main class="page-stack">
       <section class="page active" id="home">
-        <article class="card">
-          <span class="tag">Homepage</span>
-          <h1>The AP Calculus Time Capsule</h1>
-          <img src="images/Homepage.png" alt="AP Calculus Time Capsule" style="width: 100%; border-radius: 12px; margin-bottom: 1rem;">
-          <p>We are finally done with Calculus, Summer is just around the corner. You're sitting in calculus class doing absolutely nothing productive when suddenly Ms. Drum walks in carrying the giant bin of missing calculators. She should be relaxed. She should be letting everyone chill. But instead, she drops the bin on the desk and says, 'WHERE ARE MY CALCULATORS??'</p>
-          <p>The class barely reacts. Adit is in the back of the room with his phone watching TikToks at full volume and rage baiting everyone around him while Allen argues with him across the classroom. Shaurya is just being nonchalant in the corner, Abhinav is half asleep, and Arnav is struggling to figure out the wordle.</p>
-          <p>You lean back in your chair when the whiteboard suddenly glitches. A glowing sine graph tears across the board and starts pulling papers, desks, and backpacks toward it while old quizzes, which we all failed, from September fly through the air.</p>
-          <p>That's when you realize this isn't normal.<br>The room begins shaking.<br>And now...</p>
-          <p>Adit looks around and goes, 'Wait... where's my invite?'</p>
-          <div class="btn-row">
-            <button class="btn btn-primary" data-target="page1">Begin Escape</button>
+        <article class="card hero">
+          <div>
+            <span class="tag">Homepage</span>
+            <h1>The AP Calculus Time Capsule</h1>
+            <p class="subtitle">You are trapped inside the school year. Escape the paradox before June collapses.</p>
+            <p>We are finally done with Calculus, Summer is just around the corner. You're sitting in calculus class doing absolutely nothing productive when suddenly Ms. Drum walks in carrying the giant bin of missing calculators. She should be relaxed. She should be letting everyone chill. But instead, she drops the bin on the desk and says, 'WHERE ARE MY CALCULATORS??'</p>
+            <p>The class barely reacts. Adit is in the back of the room with his phone watching TikToks at full volume and rage baiting everyone around him while Allen argues with him across the classroom. Shaurya is just being nonchalant in the corner, Abhinav is half asleep, and Arnav is struggling to figure out the wordle.</p>
+            <p>You lean back in your chair when the whiteboard suddenly glitches. A glowing sine graph tears across the board and starts pulling papers, desks, and backpacks toward it while old quizzes, which we all failed, from September fly through the air.</p>
+            <p>That's when you realize this isn't normal.<br>The room begins shaking.<br>And now...</p>
+            <p>Adit looks around and goes, 'Wait... where's my invite?'</p>
+            <div class="btn-row">
+              <button class="btn btn-primary" data-target="page1">Begin Escape</button>
+              <button class="btn btn-secondary" data-target="page4">Jump to Final Room</button>
+            </div>
+
+            <div class="lock-box" style="margin-top:1rem;">
+              <div class="lock-title">How To Use Escape Room</div>
+              <div class="lock-hint">Important: the Google Forms are the main escape-room activity; lock consoles and easter eggs are bonus fun.</div>
+              <ul class="howto-list">
+                <li>Open and complete each room's <strong>Google Form</strong> first. That is the core part of the escape room.</li>
+                <li>Use lock consoles to unlock navigation between rooms as an extra game layer.</li>
+                <li>Collect the room clues, then solve the Final Room chain to finish the timeline.</li>
+                <li>Optional extras: click faint equations, the logo easter egg, and the hidden background glyph.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="hero-image">
+            <img src="images/Homepage.png" alt="The Calculus Paradox hero image">
+            <div class="hero-note">Phase 01: September breach detected. Locate three code fragments to restore the present timeline.</div>
           </div>
         </article>
       </section>
@@ -223,8 +1156,9 @@
       <section class="page" id="page1">
         <article class="card content-grid">
           <div>
-            <span class="tag">Page 1</span>
+            <span class="tag">Room 1</span>
             <h2>Room 1: The Limit &amp; Derivatives of Time</h2>
+            <p class="subtitle">Codename: The Derivative Chamber</p>
             <p>We are now in Ms. Drum's memories of AP Calculus.</p>
             <p>You wake up back in September. The classroom looks older, unfinished notes cover the walls, and everyone is suddenly holding the very first limits quiz. Every paper has the same giant red number written across the top.</p>
             <p>67.</p>
@@ -236,18 +1170,52 @@
             <p>That's when you realize the only way to escape the Limits &amp; Derivatives Era is to solve the problems that started it all.</p>
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLScMw4_x12Tmo2ZFsVnqooIESN0onql60DIwYXhmWlsSbwJZNg/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
-              <button class="btn btn-secondary" data-target="page2">Next Page</button>
+              <button class="btn btn-secondary" data-target="home">Previous Page</button>
+              <button class="btn btn-secondary is-disabled" data-target="page2" data-next-room="room1" disabled>Next Page (Unlock Room 1)</button>
+            </div>
+            <span class="secret-equation" data-lore="lore1">lim x->a [timeline]/[panic] = ?</span>
+            <div class="lore" id="lore1">Lore Fragment: The lock does not want the number symbol 67. It wants the score written as a word.</div>
+          </div>
+          <div>
+            <div class="image-panel">
+              <img src="images/Room1.jpg" alt="Room 1 image">
+            </div>
+            <div class="hud-panel">
+              <div class="hud-row"><span>Lock State</span><span data-lock-display="room1">🔒 LOCKED</span></div>
+              <div class="hud-progress"><span data-lock-progress="room1" style="width:20%"></span></div>
+              <div class="lock-box" data-lock-room="room1">
+                <div class="lock-title">Room 1 Lock Console</div>
+                <div class="lock-hint">Hint: pick the option that writes the repeated score as a word.</div>
+                <div class="lock-row">
+                  <div class="lock-options" role="group" aria-label="Room 1 lock options">
+                    <button class="lock-choice" type="button" data-lock-choice="room1" data-value="sixtyseven">sixtyseven</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room1" data-value="derivative">derivative</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room1" data-value="limitstorm">limitstorm</button>
+                  </div>
+                  <button class="btn btn-primary" data-lock-check="room1">Unlock</button>
+                </div>
+                <div class="lock-status" data-lock-status="room1">Status: locked</div>
+              </div>
+              <div class="console-visual room1-console" title="Temporal lock signal">
+                <svg class="console-svg" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room 1 time console visual">
+                  <path class="console-grid" d="M0 30 H320 M0 60 H320 M0 90 H320 M40 0 V120 M80 0 V120 M120 0 V120 M160 0 V120 M200 0 V120 M240 0 V120 M280 0 V120"/>
+                  <circle class="console-ring" cx="80" cy="60" r="24"/>
+                  <line class="console-hand" x1="80" y1="60" x2="80" y2="36"/>
+                  <path class="console-wave" d="M140 74 C 165 42, 192 86, 218 50 S 272 32, 300 58"/>
+                  <text x="12" y="18" fill="#d6e7ff" font-size="11" font-family="Consolas">LIMIT ERA SIGNAL</text>
+                </svg>
+              </div>
             </div>
           </div>
-          <div class="image-placeholder"><img src="images/Room1.jpg" alt="Room 1" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
         </article>
       </section>
 
       <section class="page" id="page2">
         <article class="card content-grid">
           <div>
-            <span class="tag">Page 2</span>
+            <span class="tag">Room 2</span>
             <h2>Room 2: The Integral Archives</h2>
+            <p class="subtitle">Codename: The Integral Vault</p>
             <p>The room suddenly glitches and you fast forward to March. Old integral packets are stacked across every desk, antiderivatives on the floors, and the clock is frozen the night before the integrals quiz.</p>
             <p>At the front of the room, Shaurya and Disha are desperately trying to convince Ms. Drum to move the quiz back one more day. Shaurya is fully on his knees begging while somehow bringing up stories about Ms. Drum's college friends like it is helping his case.</p>
             <p>Meanwhile, Adit is in the corner complaining that he still does not have his driver's license and now has to stay after school for extra help.</p>
@@ -257,18 +1225,51 @@
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd_cz3rWEc8evZBmuGZVjc7QgbQidJHr7R25lRl3ulQqp_cjA/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page1">Previous Page</button>
-              <button class="btn btn-secondary" data-target="page3">Next Page</button>
+              <button class="btn btn-secondary is-disabled" data-target="page3" data-next-room="room2" disabled>Next Page (Unlock Room 2)</button>
+            </div>
+            <span class="secret-equation" data-lore="lore2">int panic dt from Sep to Mar</span>
+            <div class="lore" id="lore2">Lore Fragment: This lock asks for the exact term that undoes differentiation.</div>
+          </div>
+          <div>
+            <div class="image-panel">
+              <img src="images/Room2.png" alt="Room 2 image">
+            </div>
+            <div class="hud-panel">
+              <div class="hud-row"><span>Lock State</span><span data-lock-display="room2">🔒 LOCKED</span></div>
+              <div class="hud-progress"><span data-lock-progress="room2" style="width:20%"></span></div>
+              <div class="lock-box" data-lock-room="room2">
+                <div class="lock-title">Room 2 Lock Console</div>
+                <div class="lock-hint">Hint: choose what you get when you reverse a derivative.</div>
+                <div class="lock-row">
+                  <div class="lock-options" role="group" aria-label="Room 2 lock options">
+                    <button class="lock-choice" type="button" data-lock-choice="room2" data-value="riemannsum">riemannsum</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room2" data-value="antiderivative">antiderivative</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room2" data-value="definitearea">definitearea</button>
+                  </div>
+                  <button class="btn btn-primary" data-lock-check="room2">Unlock</button>
+                </div>
+                <div class="lock-status" data-lock-status="room2">Status: locked</div>
+              </div>
+              <div class="console-visual room2-console" title="Temporal lock signal">
+                <svg class="console-svg" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room 2 time console visual">
+                  <path class="console-grid" d="M0 30 H320 M0 60 H320 M0 90 H320 M40 0 V120 M80 0 V120 M120 0 V120 M160 0 V120 M200 0 V120 M240 0 V120 M280 0 V120"/>
+                  <circle class="console-ring" cx="80" cy="60" r="24"/>
+                  <line class="console-hand" x1="80" y1="60" x2="98" y2="44"/>
+                  <path class="console-wave" d="M138 82 Q 162 54 184 60 T 230 42 T 278 36 T 310 28"/>
+                  <text x="12" y="18" fill="#d6e7ff" font-size="11" font-family="Consolas">INTEGRAL VAULT SIGNAL</text>
+                </svg>
+              </div>
             </div>
           </div>
-          <div class="image-placeholder"><img src="images/Room2.png" alt="Room 2" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
         </article>
       </section>
 
       <section class="page" id="page3">
         <article class="card content-grid">
           <div>
-            <span class="tag">Page 3</span>
+            <span class="tag">Room 3</span>
             <h2>Room 3: The Applications Chamber</h2>
+            <p class="subtitle">Codename: The Chain Rule Reactor</p>
             <p>The timeline skips forward again and suddenly you are back in the Applications unit. Optimization notes cover the walls, related rates diagrams are floating through the air, and particle motion formulas are flashing across the whiteboard.</p>
             <p>Adit is loudly complaining that the optimization test was the hardest thing ever created while Shaurya is getting glazed for dropping one of the highest scores. Arnav is randomly flexing his white teeth in the reflection of the classroom window while Abhinav sits quietly in the corner pretending none of this concerns him.</p>
             <p>Then a phone notification goes off.</p>
@@ -277,59 +1278,483 @@
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/1HTXpFUtJOoqZVgXZm9JozFWV9m_ndRPIpDyKBK31VCc/viewform?edit_requested=true" target="_blank" rel="noopener noreferrer">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page2">Previous Page</button>
-              <button class="btn btn-secondary" data-target="page4">Next Page</button>
+              <button class="btn btn-secondary is-disabled" data-target="page4" data-next-room="room3" disabled>Next Page (Unlock Room 3)</button>
+            </div>
+            <span class="secret-equation" data-lore="lore3">dy/dt = (dy/dx)(dx/dt) if t survives</span>
+            <div class="lore" id="lore3">Lore Fragment: The clue is literally dy/dt = (dy/dx)(dx/dt), which names the chain rule.</div>
+          </div>
+          <div>
+            <div class="image-panel">
+              <img src="images/Room3.png" alt="Room 3 image">
+            </div>
+            <div class="hud-panel">
+              <div class="hud-row"><span>Lock State</span><span data-lock-display="room3">🔒 LOCKED</span></div>
+              <div class="hud-progress"><span data-lock-progress="room3" style="width:20%"></span></div>
+              <div class="lock-box" data-lock-room="room3">
+                <div class="lock-title">Room 3 Lock Console</div>
+                <div class="lock-hint">Hint: this lock is solved by the derivative rule that combines inside and outside functions.</div>
+                <div class="lock-row">
+                  <div class="lock-options" role="group" aria-label="Room 3 lock options">
+                    <button class="lock-choice" type="button" data-lock-choice="room3" data-value="productrule">productrule</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room3" data-value="chainrule">chainrule</button>
+                    <button class="lock-choice" type="button" data-lock-choice="room3" data-value="powerrule">powerrule</button>
+                  </div>
+                  <button class="btn btn-primary" data-lock-check="room3">Unlock</button>
+                </div>
+                <div class="lock-status" data-lock-status="room3">Status: locked</div>
+              </div>
+              <div class="console-visual room3-console" title="Temporal lock signal">
+                <svg class="console-svg" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room 3 time console visual">
+                  <path class="console-grid" d="M0 30 H320 M0 60 H320 M0 90 H320 M40 0 V120 M80 0 V120 M120 0 V120 M160 0 V120 M200 0 V120 M240 0 V120 M280 0 V120"/>
+                  <circle class="console-ring" cx="80" cy="60" r="24"/>
+                  <line class="console-hand" x1="80" y1="60" x2="66" y2="42"/>
+                  <path class="console-wave" d="M138 70 L 168 70 L 186 40 L 208 78 L 232 38 L 258 76 L 286 48 L 312 64"/>
+                  <text x="12" y="18" fill="#d6e7ff" font-size="11" font-family="Consolas">APPLICATION REACTOR SIGNAL</text>
+                </svg>
+              </div>
             </div>
           </div>
-          <div class="image-placeholder"><img src="images/Room3.png" alt="Room 3" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
         </article>
       </section>
 
       <section class="page" id="page4">
         <article class="card content-grid">
           <div>
-            <span class="tag">Page 4</span>
+            <span class="tag">Final Room</span>
             <h2>The Final Code of Calculus</h2>
+            <p class="subtitle">Codename: The Singularity Core</p>
             <p>The door to the Applications Chamber blows wide open, and you stumble back into the main classroom. The timeline is moving at max speed; all the floating cones smash to the ground, derivative equations blur, and the whiteboard lets seems to be getting pieced slowly together...</p>
             <p>Through the smoke, you see the hallway. Summer vacation is literally a foot away.</p>
             <p>But the portal is blocking you. Remember those 3 metal locks mentioned in every room? They're demanding the ultimate master key to shut down the rift permanently. This is it. Look back into the past and put the code together. Bring together your secret code words from Room 1, Room 2, and Room 3 into a single continuous chain of words to shatter the loop!</p>
             <p>Type the codes in exact sequential order: Room 1 + Room 2 + Room 3<br>Use all lowercase letters with no spaces or symbols. Mess up a single letter, and you are trapped in the capsule forever!</p>
             <div class="btn-row">
-              <a class="btn btn-primary" href="GOOGLE_FORM_LINK" target="_blank" rel="noopener noreferrer">Open Google Form</a>
+              <a class="btn btn-primary is-disabled" id="finalFormBtn" href="#" role="button">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page3">Previous Page</button>
               <button class="btn btn-secondary" data-target="home">Back to Home</button>
             </div>
+            <div class="room-code">Final form unlocks after solving the final console.</div>
+            <span class="secret-equation" data-lore="lore4">portal.integrity := sum(lock_i)/3</span>
+            <div class="lore" id="lore4">Hidden Override: You found the singularity bypass. The portal harmonics calm for 6 seconds.</div>
           </div>
-          <div class="image-placeholder"><img src="images/Finalroom.jpg" alt="Final Room" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></div>
+          <div>
+            <div class="image-panel">
+              <img src="images/Finalroom.jpg" alt="Final room image">
+            </div>
+            <div class="hud-panel">
+              <div class="hud-row"><span>Portal Integrity</span><span data-lock-display="final">🔒 LOCKED</span></div>
+              <div class="hud-progress"><span data-lock-progress="final" style="width:20%"></span></div>
+              <div class="lock-box" data-lock-room="final">
+                <div class="lock-title">Final Lock Console</div>
+                <div class="lock-hint">Hint: choose the exact Room1+Room2+Room3 chain in order (no spaces).</div>
+                <div class="lock-row">
+                  <div class="lock-options" role="group" aria-label="Final lock options">
+                    <button class="lock-choice" type="button" data-lock-choice="final" data-value="sixtysevenantiderivativechainrule">sixtysevenantiderivativechainrule</button>
+                    <button class="lock-choice" type="button" data-lock-choice="final" data-value="chainrulesixtysevenantiderivative">chainrulesixtysevenantiderivative</button>
+                    <button class="lock-choice" type="button" data-lock-choice="final" data-value="antiderivativesixtysevenchainrule">antiderivativesixtysevenchainrule</button>
+                  </div>
+                  <button class="btn btn-primary" data-lock-check="final">Unlock</button>
+                </div>
+                <div class="lock-status" data-lock-status="final">Status: locked</div>
+              </div>
+              <div class="console-visual final-console" title="Temporal lock signal">
+                <svg class="console-svg" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Final room time console visual">
+                  <path class="console-grid" d="M0 30 H320 M0 60 H320 M0 90 H320 M40 0 V120 M80 0 V120 M120 0 V120 M160 0 V120 M200 0 V120 M240 0 V120 M280 0 V120"/>
+                  <circle class="console-ring" cx="80" cy="60" r="24"/>
+                  <line class="console-hand" x1="80" y1="60" x2="100" y2="60"/>
+                  <path class="console-wave" d="M140 84 C 170 26, 200 96, 228 36 S 278 16, 312 56"/>
+                  <text x="12" y="18" fill="#d6e7ff" font-size="11" font-family="Consolas">SINGULARITY CORE SIGNAL</text>
+                </svg>
+              </div>
+            </div>
+          </div>
         </article>
       </section>
     </main>
+
+    <div class="footer-note">Hint: click faint equations to unlock hidden lore. Click the title 5 times for a surprise.</div>
   </div>
 
   <script>
-    // JavaScript navigation logic: one visible section + active tab highlighting.
+    // JavaScript navigation logic: one visible page at a time with active tab highlighting.
     (function () {
       const pages = Array.from(document.querySelectorAll(".page"));
-      const navButtons = Array.from(document.querySelectorAll(".tab"));
-      const actionButtons = Array.from(document.querySelectorAll("[data-target]"));
+      const navTabs = Array.from(document.querySelectorAll(".tab"));
+      const triggers = Array.from(document.querySelectorAll("[data-target]"));
+      const timelineBar = document.getElementById("timelineBar");
+      const loadingScreen = document.getElementById("loadingScreen");
+      const clockChip = document.getElementById("clockChip");
+      const loreChip = document.getElementById("loreChip");
+      const bgEgg = document.getElementById("bgEgg");
+      const equations = [
+        "lim x->a f(x)",
+        "f'(x) = lim(h->0)",
+        "int_a^b f(x) dx",
+        "d/dx(sin x) = cos x",
+        "dy/dx",
+        "Delta t -> 0",
+        "v(t)=s'(t)",
+        "a(t)=v'(t)",
+        "67"
+      ];
 
-      function showPage(id) {
-        pages.forEach((page) => {
-          page.classList.toggle("active", page.id === id);
-        });
+      const pageOrder = ["home", "page1", "page2", "page3", "page4"];
+      const pagePercentMap = { home: 8, page1: 26, page2: 49, page3: 73, page4: 100 };
+      const finalFormLink = "https://docs.google.com/forms/d/e/1FAIpQLSdBcIMQx5RPcXUHgyE4-sItpf8wIiqM35P1DwcnWGdtJEToUQ/viewform";
+      const lockAnswers = { room1: "sixtyseven", room2: "antiderivative", room3: "chainrule", final: "sixtysevenantiderivativechainrule" };
+      const lockState = JSON.parse(localStorage.getItem("calcParadoxLocks") || "{\"room1\":false,\"room2\":false,\"room3\":false,\"final\":false}");
+      const selectedChoices = { room1: "", room2: "", room3: "", final: "" };
+      const finalFormBtn = document.getElementById("finalFormBtn");
+      const foundLore = new Set();
+      let currentTimelinePercent = pagePercentMap.home;
+      let integrityPauseUntil = 0;
 
-        navButtons.forEach((tab) => {
-          tab.classList.toggle("active", tab.getAttribute("data-target") === id);
-        });
-
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      function spawnCelebration(x, y) {
+        const colors = ["#68f3ff", "#bc8bff", "#ff7fc5", "#9bffc7"];
+        for (let i = 0; i < 14; i += 1) {
+          const s = document.createElement("span");
+          s.className = "spark";
+          s.style.left = x + "px";
+          s.style.top = y + "px";
+          s.style.background = colors[i % colors.length];
+          s.style.setProperty("--sx", (Math.random() * 110 - 55).toFixed(1) + "px");
+          s.style.setProperty("--sy", (Math.random() * 110 - 70).toFixed(1) + "px");
+          document.body.appendChild(s);
+          setTimeout(() => s.remove(), 900);
+        }
       }
 
-      actionButtons.forEach((button) => {
-        button.addEventListener("click", function () {
+      function spawn67Burst(x, y) {
+        for (let i = 0; i < 12; i += 1) {
+          const t = document.createElement("span");
+          t.className = "egg-67";
+          t.textContent = "67";
+          t.style.left = x + "px";
+          t.style.top = y + "px";
+          t.style.setProperty("--dx", (Math.random() * 150 - 75).toFixed(1) + "px");
+          t.style.setProperty("--dy", (Math.random() * -120 - 20).toFixed(1) + "px");
+          document.body.appendChild(t);
+          setTimeout(() => t.remove(), 1000);
+        }
+      }
+
+      function refreshLoreChip(totalLore) {
+        if (!loreChip) return;
+        loreChip.textContent = "Hidden Logs: " + foundLore.size + "/" + totalLore;
+      }
+
+      function markLoreFound(loreId, totalLore) {
+        if (!loreId || foundLore.has(loreId)) return false;
+        foundLore.add(loreId);
+        refreshLoreChip(totalLore);
+        return true;
+      }
+
+      function animateTimeline(targetPercent) {
+        const step = currentTimelinePercent < targetPercent ? 1 : -1;
+        const timer = setInterval(() => {
+          if (currentTimelinePercent === targetPercent) {
+            clearInterval(timer);
+            return;
+          }
+          currentTimelinePercent += step;
+          timelineBar.style.width = currentTimelinePercent + "%";
+        }, 12);
+      }
+
+      function setTimeline(targetId) {
+        const target = pagePercentMap[targetId] || 8;
+        animateTimeline(target);
+      }
+
+      function syncLockButtons() {
+        document.querySelectorAll("[data-next-room]").forEach((btn) => {
+          const room = btn.getAttribute("data-next-room");
+          const open = !!lockState[room];
+          btn.disabled = !open;
+          btn.classList.toggle("is-disabled", !open);
+          if (open) {
+            btn.textContent = "Next Page";
+          }
+        });
+
+        if (finalFormBtn) {
+          finalFormBtn.classList.toggle("is-disabled", !lockState.final);
+          finalFormBtn.setAttribute("href", lockState.final ? finalFormLink : "#");
+          if (lockState.final) {
+            finalFormBtn.setAttribute("target", "_blank");
+            finalFormBtn.setAttribute("rel", "noopener noreferrer");
+          } else {
+            finalFormBtn.removeAttribute("target");
+            finalFormBtn.removeAttribute("rel");
+          }
+        }
+      }
+
+      function syncLockStatus() {
+        Object.keys(lockAnswers).forEach((room) => {
+          const status = document.querySelector('[data-lock-status="' + room + '"]');
+          const display = document.querySelector('[data-lock-display="' + room + '"]');
+          const bar = document.querySelector('[data-lock-progress="' + room + '"]');
+          if (!status) return;
+          if (lockState[room]) {
+            status.className = "lock-status ok";
+            status.textContent = "Status: unlocked";
+            if (display) display.textContent = "🔓 UNLOCKED";
+            if (bar) bar.style.width = "100%";
+          } else {
+            status.className = "lock-status";
+            status.textContent = "Status: locked";
+            if (display) display.textContent = "🔒 LOCKED";
+            if (bar) bar.style.width = "20%";
+          }
+        });
+      }
+
+      function showPage(id) {
+        if (!id) return;
+        loadingScreen.classList.add("show");
+
+        setTimeout(() => {
+          pages.forEach((page) => page.classList.toggle("active", page.id === id));
+          navTabs.forEach((tab) => tab.classList.toggle("active", tab.getAttribute("data-target") === id));
+          setTimeline(id);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 110);
+
+        setTimeout(() => {
+          loadingScreen.classList.remove("show");
+        }, 300);
+      }
+
+      triggers.forEach((btn) => {
+        btn.addEventListener("click", function () {
+          if (this.disabled) return;
           const target = this.getAttribute("data-target");
           if (target) showPage(target);
         });
       });
+
+      // Interactive room locks.
+      document.querySelectorAll("[data-lock-choice]").forEach((choiceBtn) => {
+        choiceBtn.addEventListener("click", () => {
+          const room = choiceBtn.getAttribute("data-lock-choice");
+          const value = choiceBtn.getAttribute("data-value") || "";
+          selectedChoices[room] = value;
+          document.querySelectorAll('[data-lock-choice="' + room + '"]').forEach((opt) => {
+            opt.classList.toggle("selected", opt === choiceBtn);
+          });
+        });
+      });
+
+      document.querySelectorAll("[data-lock-check]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const room = btn.getAttribute("data-lock-check");
+          const status = document.querySelector('[data-lock-status="' + room + '"]');
+          if (!status || !lockAnswers[room]) return;
+
+          const guess = (selectedChoices[room] || "").toLowerCase();
+          if (!guess) {
+            status.className = "lock-status bad";
+            status.textContent = "Status: choose one option first";
+            return;
+          }
+
+          if (guess === lockAnswers[room]) {
+            lockState[room] = true;
+            localStorage.setItem("calcParadoxLocks", JSON.stringify(lockState));
+            status.className = "lock-status ok";
+            status.textContent = "Status: unlocked";
+            syncLockButtons();
+            syncLockStatus();
+
+            const box = btn.closest(".lock-box");
+            if (box) {
+              box.classList.add("celebrate");
+              const rect = box.getBoundingClientRect();
+              spawnCelebration(rect.left + rect.width / 2, rect.top + 20);
+              setTimeout(() => box.classList.remove("celebrate"), 650);
+
+              if (room === "final") {
+                // Final unlock gets an extra celebration burst.
+                for (let i = 0; i < 3; i += 1) {
+                  setTimeout(() => {
+                    spawnCelebration(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                  }, i * 180);
+                }
+                clockChip.textContent = "Timeline 30% Stable";
+                integrityPauseUntil = Date.now() + 2600;
+                const finalLorePanel = document.getElementById("lore4");
+                if (finalLorePanel && !finalLorePanel.classList.contains("show")) {
+                  finalLorePanel.classList.add("show");
+                }
+                markLoreFound("lore4", 4);
+              }
+            }
+          } else {
+            status.className = "lock-status bad";
+            status.textContent = "Status: incorrect option, try again";
+          }
+        });
+      });
+
+      // Ambient equations drifting behind content.
+      const layer = document.getElementById("equationLayer");
+      for (let i = 0; i < 16; i += 1) {
+        const item = document.createElement("span");
+        item.className = "equation";
+        item.textContent = equations[Math.floor(Math.random() * equations.length)];
+        item.style.top = (Math.random() * 92).toFixed(1) + "%";
+        item.style.fontSize = (0.85 + Math.random() * 0.4).toFixed(2) + "rem";
+        item.style.animationDuration = (13 + Math.random() * 20).toFixed(1) + "s";
+        item.style.animationDelay = (Math.random() * 5).toFixed(1) + "s";
+        layer.appendChild(item);
+      }
+
+      // Canvas particles + mouse-reactive parallax glow.
+      const canvas = document.getElementById("particleCanvas");
+      const ctx = canvas.getContext("2d");
+      const particles = [];
+      const maxParticles = 55;
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function seedParticles() {
+        particles.length = 0;
+        for (let i = 0; i < maxParticles; i += 1) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: 1 + Math.random() * 2.1,
+            vx: -0.15 + Math.random() * 0.3,
+            vy: -0.2 + Math.random() * 0.4,
+            a: 0.2 + Math.random() * 0.6
+          });
+        }
+      }
+
+      function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const grd = ctx.createRadialGradient(mouseX, mouseY, 30, mouseX, mouseY, 260);
+        grd.addColorStop(0, "rgba(104,243,255,0.15)");
+        grd.addColorStop(1, "rgba(104,243,255,0)");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < -10) p.x = canvas.width + 10;
+          if (p.x > canvas.width + 10) p.x = -10;
+          if (p.y < -10) p.y = canvas.height + 10;
+          if (p.y > canvas.height + 10) p.y = -10;
+
+          ctx.beginPath();
+          ctx.fillStyle = "rgba(104,243,255," + p.a.toFixed(2) + ")";
+          ctx.shadowColor = "rgba(104,243,255,0.75)";
+          ctx.shadowBlur = 10;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        requestAnimationFrame(drawParticles);
+      }
+
+      resizeCanvas();
+      seedParticles();
+      drawParticles();
+
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        seedParticles();
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      // Easter egg interactions: hidden equation logs.
+      const loreTriggers = Array.from(document.querySelectorAll(".secret-equation"));
+      const totalLore = loreTriggers.length;
+      refreshLoreChip(totalLore);
+      loreTriggers.forEach((el) => {
+        el.addEventListener("click", () => {
+          const targetId = el.getAttribute("data-lore");
+          const panel = document.getElementById(targetId);
+          if (!panel) return;
+          if (!panel.classList.contains("show")) {
+            panel.classList.add("show");
+            panel.classList.add("celebrate");
+            markLoreFound(targetId, totalLore);
+            const rect = panel.getBoundingClientRect();
+            spawnCelebration(rect.left + rect.width / 2, rect.top + 10);
+            setTimeout(() => panel.classList.remove("celebrate"), 650);
+            if (targetId === "lore4") {
+              clockChip.textContent = "Timeline 30% Stable";
+              integrityPauseUntil = Date.now() + 6000;
+            }
+          }
+        });
+      });
+
+      // Clickable background glyph easter egg.
+      if (bgEgg) {
+        const originalGlyph = bgEgg.textContent;
+        bgEgg.addEventListener("click", () => {
+          const rect = bgEgg.getBoundingClientRect();
+          const x = rect.left + rect.width / 2;
+          const y = rect.top + rect.height / 2;
+          bgEgg.textContent = "67";
+          bgEgg.classList.add("explode");
+          spawnCelebration(x, y);
+          spawn67Burst(x, y);
+          clockChip.textContent = "Timeline 29% Stable";
+          integrityPauseUntil = Date.now() + 1700;
+          setTimeout(() => {
+            bgEgg.classList.remove("explode");
+            bgEgg.textContent = originalGlyph;
+          }, 460);
+        });
+      }
+
+      // Title click easter egg.
+      const brandTap = document.getElementById("brandTap");
+      let taps = 0;
+      const originalBrand = brandTap.textContent;
+      brandTap.addEventListener("click", () => {
+        taps += 1;
+        if (taps >= 5) {
+          brandTap.textContent = "Paradox Anchor Restored";
+          clockChip.textContent = "Timeline 30% Stable";
+          integrityPauseUntil = Date.now() + 1800;
+          setTimeout(() => {
+            brandTap.textContent = originalBrand;
+            taps = 0;
+          }, 1800);
+        }
+      });
+
+      // Dynamic clock chip + console lore.
+      console.log("[The Calculus Paradox] Psst: lim curiosity->infinity unlocks hidden lore.");
+      setInterval(() => {
+        if (Date.now() < integrityPauseUntil) return;
+        const now = new Date();
+        const sec = now.getSeconds();
+        const stability = 20 + (sec % 11);
+        clockChip.textContent = "Timeline " + stability + "% Stable";
+      }, 1200);
+
+      // Initial state.
+      syncLockButtons();
+      syncLockStatus();
+      setTimeline("home");
     })();
   </script>
 </body>
