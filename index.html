@@ -1183,7 +1183,7 @@
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLScMw4_x12Tmo2ZFsVnqooIESN0onql60DIwYXhmWlsSbwJZNg/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
               <button class="btn btn-secondary" data-target="home">Previous Page</button>
-              <button class="btn btn-secondary is-disabled" data-target="page2" data-next-room="room1" disabled>Next Page (Unlock Room 1)</button>
+              <button class="btn btn-secondary" data-target="page2">Next Page</button>
             </div>
             <span class="secret-equation" data-lore="lore1">lim x->a [timeline]/[panic] = ?</span>
             <div class="lore" id="lore1">Lore Fragment: The lock does not want the number symbol 67. It wants the score written as a word.</div>
@@ -1237,7 +1237,7 @@
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd_cz3rWEc8evZBmuGZVjc7QgbQidJHr7R25lRl3ulQqp_cjA/viewform" target="_blank" rel="noopener noreferrer">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page1">Previous Page</button>
-              <button class="btn btn-secondary is-disabled" data-target="page3" data-next-room="room2" disabled>Next Page (Unlock Room 2)</button>
+              <button class="btn btn-secondary" data-target="page3">Next Page</button>
             </div>
             <span class="secret-equation" data-lore="lore2">int panic dt from Sep to Mar</span>
             <div class="lore" id="lore2">Lore Fragment: This lock asks for the exact term that undoes differentiation.</div>
@@ -1290,7 +1290,7 @@
             <div class="btn-row">
               <a class="btn btn-primary" href="https://docs.google.com/forms/d/1HTXpFUtJOoqZVgXZm9JozFWV9m_ndRPIpDyKBK31VCc/viewform?edit_requested=true" target="_blank" rel="noopener noreferrer">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page2">Previous Page</button>
-              <button class="btn btn-secondary is-disabled" data-target="page4" data-next-room="room3" disabled>Next Page (Unlock Room 3)</button>
+              <button class="btn btn-secondary" data-target="page4">Next Page</button>
             </div>
             <span class="secret-equation" data-lore="lore3">dy/dt = (dy/dx)(dx/dt) if t survives</span>
             <div class="lore" id="lore3">Lore Fragment: The clue is literally dy/dt = (dy/dx)(dx/dt), which names the chain rule.</div>
@@ -1340,7 +1340,7 @@
             <p>But the portal is blocking you. Remember those 3 metal locks mentioned in every room? They're demanding the ultimate master key to shut down the rift permanently. This is it. Look back into the past and put the code together. Bring together your secret code words from Room 1, Room 2, and Room 3 into a single continuous chain of words to shatter the loop!</p>
             <p>Type the codes in exact sequential order: Room 1 + Room 2 + Room 3<br>Use all lowercase letters with no spaces or symbols. Mess up a single letter, and you are trapped in the capsule forever!</p>
             <div class="btn-row">
-              <a class="btn btn-primary is-disabled" id="finalFormBtn" href="#" role="button">Open Google Form</a>
+              <a class="btn btn-primary" id="finalFormBtn" href="https://docs.google.com/forms/d/e/1FAIpQLSdBcIMQx5RPcXUHgyE4-sItpf8wIiqM35P1DwcnWGdtJEToUQ/viewform" target="_blank" rel="noopener noreferrer" role="button">Open Google Form</a>
               <button class="btn btn-secondary" data-target="page3">Previous Page</button>
               <button class="btn btn-secondary" data-target="home">Back to Home</button>
             </div>
@@ -1490,15 +1490,10 @@
         });
 
         if (finalFormBtn) {
-          finalFormBtn.classList.toggle("is-disabled", !lockState.final);
-          finalFormBtn.setAttribute("href", lockState.final ? finalFormLink : "#");
-          if (lockState.final) {
-            finalFormBtn.setAttribute("target", "_blank");
-            finalFormBtn.setAttribute("rel", "noopener noreferrer");
-          } else {
-            finalFormBtn.removeAttribute("target");
-            finalFormBtn.removeAttribute("rel");
-          }
+          finalFormBtn.classList.remove("is-disabled");
+          finalFormBtn.setAttribute("href", finalFormLink);
+          finalFormBtn.setAttribute("target", "_blank");
+          finalFormBtn.setAttribute("rel", "noopener noreferrer");
         }
       }
 
